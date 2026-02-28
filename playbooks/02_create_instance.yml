@@ -9,3 +9,12 @@
         - create
       ansible.builtin.include_role:
         name: vm
+
+    - name: Ticket update vm creation is complete.  Hoo-yah! Automation Rocks!
+      tags:
+        - always
+      vars:
+        update_requested_item_comments: Your EC2 instance has been created
+        update_requested_item_state: 2
+      ansible.builtin.include_role:
+        name: update_requested_item

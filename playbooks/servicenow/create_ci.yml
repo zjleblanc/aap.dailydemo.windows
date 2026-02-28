@@ -3,5 +3,15 @@
   hosts: localhost
 
   roles:
-
     - role: create_configuration_item
+
+  tasks:
+    - name: Ticket update vpc creation is complete.  Hoo-yah! Automation Rocks!
+      tags:
+        - always
+      vars:
+        update_requested_item_comments: CI has been created and linked
+        update_requested_item_state: 2
+        update_requested_item_ci: "{{ my_server }}"
+      ansible.builtin.include_role:
+        name: update_requested_item
