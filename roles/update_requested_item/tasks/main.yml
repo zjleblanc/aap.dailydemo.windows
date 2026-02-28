@@ -23,6 +23,7 @@
           request_state: "{{ update_requested_item_state | default(omit) }}"
           comments: "{{ update_requested_item_comments }}"
           state: "{{ update_requested_item_state }}"
+          cmdb_ci: "{{ my_server | default(omit) }}"
 
     - name: Print out hostvars
       ansible.builtin.debug:
