@@ -36,6 +36,11 @@
         number: "{{ r_chg_req.record.number }}"
         state: implement
 
+    - name: Generate work dates
+      ansible.builtin.set_fact:
+        planned_start_date: "{{ lookup('pipe', 'date +\"%Y%m%d %H:%M:%S\"') }}"
+        planned_end_date: "{{ lookup('pipe', 'date -d \"+30 minutes\" +\"%Y%m%d %H:%M:%S\"') }}"
+
     - name: Create a change task
       tags: snow
       delegate_to: localhost
@@ -47,9 +52,9 @@
         state: open
         assigned_to: service.ansible
         short_description: "creating accounts on {{ inventory_hostname }}"
-        description: "starting account creation @ {{ ansible_date_time.iso8601 }}"
-        planned_start_date: "{{ lookup('pipe', 'date +\"%Y%m%d %H:%M:%S\"') }}"
-        planned_end_date: "{{ lookup('pipe', 'date -d \"+30 minutes\" +\"%Y%m%d %H:%M:%S\"') }}"
+        description: "starting account creation @ {{ planned_start_date }}"
+        planned_start_date: "{{ planned_start_date }}"
+        planned_end_date: "{{ planned_end_date }}"
         other:
           approval: approved
 
