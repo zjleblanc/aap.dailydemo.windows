@@ -2,6 +2,84 @@
 - name: Windows patching
   hosts: windemo
 
-  roles:
+  pre_tasks:
+    - name: Create change request
+      tags: snow
+      register: r_chg_req
+      delegate_to: localhost
+      run_once: true
+      servicenow.itsm.change_request:
+        type: standard
+        state: new
+        requested_by: service.ansible
+        short_description: Windows Patch
+        description: "Affected hosts: {{ ','.join(ansible_play_hosts) }}"
+        category: system_software
+        priority: moderate
+        risk: low
+        impact: low
 
+    - name: Update change request status
+      tags: snow
+      delegate_to: localhost
+      run_once: true
+      servicenow.itsm.change_request:
+        number: "{{ r_chg_req.record.number }}"
+        state: scheduled
+        assignment_group: Ansible West Tigers
+
+    - name: Update change request status
+      tags: snow
+      delegate_to: localhost
+      run_once: true
+      servicenow.itsm.change_request:
+        number: "{{ r_chg_req.record.number }}"
+        state: implement
+
+    - name: Create a change task
+      tags: snow
+      delegate_to: localhost
+      register: r_chg_task
+      servicenow.itsm.change_request_task:
+        configuration_item: "{{ my_server }}"
+        change_request_number: "{{ r_chg_req.record.number }}"
+        type: implementation
+        state: open
+        assigned_to: service.ansible
+        short_description: "patching {{ inventory_hostname }}"
+        description: "starting patch @ {{ ansible_date_time.iso8601 }}"
+        planned_start_date: "{{ lookup('pipe', 'date +\"%Y%m%d %H:%M:%S\"') }}"
+        planned_end_date: "{{ lookup('pipe', 'date -d \"+30 minutes\" +\"%Y%m%d %H:%M:%S\"') }}"
+        other:
+          approval: approved
+
+  roles:
     - role: windows_patching
+
+  post_tasks:
+    - name: Close a change task | successful
+      tags: snow
+      delegate_to: localhost
+      servicenow.itsm.change_request_task:
+        number: "{{ r_chg_task.record.number }}"
+        state: closed
+        close_code: successful
+        close_notes: "{{ r_windows_updates | to_nice_yaml }}"
+
+    - name: Update change request status | review
+      tags: snow
+      delegate_to: localhost
+      run_once: true
+      servicenow.itsm.change_request:
+        number: "{{ r_chg_req.record.number }}"
+        state: review
+
+    - name: Close change request | successful
+      tags: snow
+      delegate_to: localhost
+      run_once: true
+      servicenow.itsm.change_request:
+        number: "{{ r_chg_req.record.number }}"
+        state: closed
+        close_code: successful
+        close_notes: Closed

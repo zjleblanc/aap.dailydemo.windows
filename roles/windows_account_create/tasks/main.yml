@@ -18,6 +18,7 @@
 - name: Create local user accounts
   loop: "{{ users }}"
   no_log: false
+  register: r_windows_accounts
   ansible.windows.win_user:
     name: "{{ item['name'] }}"
     password: "{{ item['user_password'] }}"
